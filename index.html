@@ -1,0 +1,1372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D&D Campaign Companion</title>
+<style>
+  :root{
+    --bg:#141210; --panel:#1e1a17; --panel2:#26211d; --ink:#ece4d6; --ink-dim:#b7ab96;
+    --accent:#d8a25e; --accent-ink:#241a0e; --line:#3a332b; --danger:#e07a6a; --ok:#8fbf8f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
+  header{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;padding:.8rem 1rem;border-bottom:1px solid var(--line)}
+  header h1{font-size:1.15rem;margin:0 0 .1rem;letter-spacing:.02em}
+  header .sub{color:var(--ink-dim);font-size:.78rem}
+  .tools{display:flex;gap:.45rem;flex-wrap:wrap;align-items:center}
+  input,select,textarea,button{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:.42rem .6rem}
+  input:focus,select:focus,textarea:focus{outline:1px solid var(--accent)}
+  textarea{width:100%;min-height:6rem;resize:vertical}
+  button{cursor:pointer}
+  button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+  button.ghost{background:transparent}
+  button.danger{color:var(--danger)}
+  button.mini{padding:.15rem .5rem;font-size:.8rem}
+  button:disabled{opacity:.4;cursor:default}
+  nav{display:flex;gap:.15rem;flex-wrap:wrap;padding:.5rem 1rem 0;border-bottom:1px solid var(--line)}
+  nav button{border:none;border-radius:8px 8px 0 0;background:transparent;color:var(--ink-dim);padding:.45rem .8rem}
+  nav button[aria-selected=true]{background:var(--panel);color:var(--accent)}
+  main{max-width:60rem;margin:1rem auto 3rem;padding:0 1rem}
+  .sechead{display:flex;align-items:center;justify-content:space-between;margin:.4rem 0 .8rem}
+  .sechead h2{font-size:1.05rem;margin:0}
+  .sechead h3{font-size:.92rem;margin:0;color:var(--ink-dim)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:.85rem 1rem;margin-bottom:.7rem}
+  .card h3{margin:0 0 .3rem;font-size:1rem;color:var(--ink)}
+  .meta{color:var(--ink-dim);font-size:.76rem;margin-bottom:.35rem}
+  .recap{white-space:pre-wrap;margin:.2rem 0}
+  .row{display:flex;gap:.45rem;flex-wrap:wrap;align-items:center}
+  .row.end{justify-content:flex-end;margin-left:auto}
+  .badge{display:inline-block;font-size:.72rem;padding:.08rem .5rem;border-radius:99px;border:1px solid var(--line);color:var(--ink-dim)}
+  .badge.pc{color:var(--ok)} .badge.npc{color:var(--accent)} .badge.loot{color:var(--accent)}
+  .item{display:flex;gap:.5rem;align-items:baseline;padding:.3rem 0;border-top:1px dashed var(--line);flex-wrap:wrap}
+  .item:first-child{border-top:none}
+  .item .qty{min-width:3.2rem;color:var(--accent);font-variant-numeric:tabular-nums}
+  .item .nm{font-weight:600}
+  .item .nt{color:var(--ink-dim);font-size:.82rem}
+  .owner{margin-bottom:1.1rem}
+  .owner>h3{margin:0 0 .2rem;font-size:.98rem}
+  .owner .total{color:var(--ink-dim);font-size:.78rem;font-weight:400}
+  .hint{color:var(--ink-dim);font-size:.85rem}
+  #searchResults{max-width:60rem;margin:.8rem auto 0;padding:0 1rem;display:none}
+  .sr-head{color:var(--ink-dim);font-size:.85rem;margin-bottom:.4rem}
+  .sr{padding:.5rem .7rem;border:1px solid var(--line);border-radius:8px;margin-bottom:.4rem;background:var(--panel);cursor:pointer}
+  .sr .when{color:var(--ink-dim);font-size:.74rem}
+  .sr .snippet{font-size:.88rem;color:var(--ink-dim)}
+  mark{background:var(--accent);color:var(--accent-ink);border-radius:2px}
+  dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;max-width:34rem;width:92%;padding:1rem 1.2rem}
+  dialog::backdrop{background:rgba(0,0,0,.6)}
+  dialog h3{margin:.2rem 0 .7rem}
+  dialog label{display:block;font-size:.8rem;color:var(--ink-dim);margin:.6rem 0 .15rem}
+  dialog input,dialog select,dialog textarea{width:100%}
+  footer{max-width:60rem;margin:0 auto;padding:1rem 1rem 2rem;color:var(--ink-dim);font-size:.78rem}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>D&amp;D Campaign Companion</h1>
+    <span class="sub">local-first &middot; timestamped &middot; searchable &middot; no accounts</span>
+  </div>
+  <div class="tools">
+    <input id="searchBox" type="search" placeholder="Search campaign&hellip;" aria-label="Search campaign" size="22">
+    <select id="campSelect" aria-label="Campaign"></select>
+    <button id="newCampBtn" class="ghost mini" title="Create a new campaign">+ Campaign</button>
+    <button id="exportBtn" class="ghost mini" title="Download a JSON backup">Export</button>
+    <button id="importBtn" class="ghost mini" title="Load a JSON backup here">Import</button>
+    <button id="delCampBtn" class="danger mini" title="Delete this campaign">Delete</button>
+  </div>
+</header>
+<div id="searchResults" aria-live="polite"></div>
+<nav id="tabs" role="tablist">
+  <button role="tab" data-tab="sessions" aria-selected="true">Sessions &amp; Recaps</button>
+  <button role="tab" data-tab="people">NPCs &amp; Party</button>
+  <button role="tab" data-tab="items">Inventories &amp; Loot</button>
+  <button role="tab" data-tab="quests">Quest Log</button>
+  <button role="tab" data-tab="ties">Relationships</button>
+  <button role="tab" data-tab="zero">Session Zero</button>
+</nav>
+<main id="main"></main>
+<footer>
+  All data lives only in this browser&rsquo;s localStorage &mdash; no cloud, no accounts, no tracking.
+  Export regularly to keep a backup. &nbsp;An Asdale Dynamics, LLC project &middot; MIT License.
+</footer>
+
+<script>
+(function () {
+"use strict";
+
+/*LOGIC-START*/
+function zeroQuestions() {
+  return [
+    "Why does each character adventure, and why do they stay with the party?",
+    "Any lines (never in the story) or veils (fade to black) to set?",
+    "Which safety tools does the table use (X-card, script change, open door)?",
+    "How did the party meet, and why do they stick together?",
+    "How is loot and treasure split?",
+    "Session cadence, length, and what a great session looks like?",
+    "Mechanical expectations: stats, level, dice style, sheet format?",
+    "Can the GM use backstories as hooks? What stays private?",
+    "How much conflict between characters is okay, and how do we pause it?",
+    "What does everyone want to get out of this campaign?"
+  ];
+}
+
+function newCampaign(name) {
+  const n = String(name == null ? "" : name).trim() || "New Campaign";
+  const ts = nowISO();
+  return {
+    id: uid("c"), name: n, description: "", createdAt: ts, updatedAt: ts,
+    sessions: [], npcs: [], party: [], inventory: [], loot: [], quests: [],
+    relationships: [], sessionZero: { answers: [], updatedAt: ts }
+  };
+}
+
+function seedCampaign() {
+  const t = "2026-10-24T19:00:00.000Z";
+  const c = newCampaign("The Lantern of Deepmoor Abbey (one-shot)");
+  c.id = "camp-deepmoor-sample";
+  c.description = "A 3-hour one-shot for three Level 3 characters. A fading pilgrimage lantern must be relit in a cursed abbey crypt before moonset.";
+  c.createdAt = "2026-10-24T17:00:00.000Z";
+  c.updatedAt = "2026-10-24T21:30:00.000Z";
+
+  c.party = [
+    {
+      id: "pc-brenna", name: "Brenna Salt", player: "", klass: "Cleric (Light domain)", level: 3,
+      notes: "Tends the abbey's beehives; convinced the lantern oil is blessed honey.", createdAt: "2026-10-24T17:00:00.000Z", updatedAt: "2026-10-24T17:00:00.000Z",
+      inventory: [
+        { id: "inv-001", name: "Lantern oil (blessed)", qty: 2, notes: "Glowers faintly when the Cantor sings.", createdAt: "2026-10-24T17:00:00.000Z", updatedAt: "2026-10-24T17:00:00.000Z" },
+        { id: "inv-002", name: "Prayer book (annotated)", qty: 1, notes: "", createdAt: "2026-10-24T17:00:00.000Z", updatedAt: "2026-10-24T17:00:00.000Z" }
+      ]
+    },
+    {
+      id: "pc-wick", name: "Jory Wick", player: "", klass: "Rogue", level: 3,
+      notes: "Ex-acolyte; knows the crypt's shortcuts and its debts.", createdAt: "2026-10-24T17:00:00.000Z", updatedAt: "2026-10-24T17:00:00.000Z",
+      inventory: [
+        { id: "inv-003", name: "Chalk (dust-free)", qty: 5, notes: "", createdAt: "2026-10-24T17:00:00.000Z", updatedAt: "2026-10-24T17:00:00.000Z" },
+        { id: "inv-004", name: "Crowbar, short", qty: 1, notes: "Used once. Regretted once.", createdAt: "2026-10-24T17:05:00.000Z", updatedAt: "2026-10-24T17:05:00.000Z" }
+      ]
+    },
+    {
+      id: "pc-mabs", name: "Mabs Underbough", player: "", klass: "Barbarian (Path of the Lampkeeper)", level: 3,
+      notes: "Carries the party's torches and most of its opinions.", createdAt: "2026-10-24T17:00:00.000Z", updatedAt: "2026-10-24T17:00:00.000Z",
+      inventory: [
+        { id: "inv-005", name: "Torches", qty: 4, notes: "", createdAt: "2026-10-24T17:00:00.000Z", updatedAt: "2026-10-24T17:00:00.000Z" },
+        { id: "inv-006", name: "Rope (50 ft, silk)", qty: 1, notes: "", createdAt: "2026-10-24T17:00:00.000Z", updatedAt: "2026-10-24T17:00:00.000Z" }
+      ]
+    }
+  ];
+
+  c.npcs = [
+    {
+      id: "npc-prior", name: "Prior Aeliana", role: "last keeper of the abbey lantern", faction: "Deepmoor Abbey", location: "the lantern loft",
+      notes: "Won't climb the tower stairs. Says the 4th step 'is not ours anymore'. Knows the real name of the thing in the crypt.", createdAt: "2026-10-24T17:00:00.000Z", updatedAt: "2026-10-24T18:10:00.000Z",
+      inventory: [
+        { id: "inv-007", name: "Crypt key (tarnished brass)", qty: 1, notes: "Left at the abbey desk for the party.", createdAt: "2026-10-24T18:00:00.000Z", updatedAt: "2026-10-24T18:10:00.000Z" }
+      ]
+    },
+    {
+      id: "npc-tolliver", name: "Tolliver Grebe", role: "ferrier and gossip", faction: "Fenwick crossing", location: "the toll bridge",
+      notes: "Rumors cost a copper; good ones cost a silver.", createdAt: "2026-10-24T17:00:00.000Z", updatedAt: "2026-10-24T17:00:00.000Z",
+      inventory: []
+    },
+    {
+      id: "npc-cantor", name: "The Cantor in the Dark", role: "something that sings beneath the crypt", faction: "—", location: "the flooded nave",
+      notes: "It sings the abbey's old hymn one syllable behind. If the lantern goes out, it gets to finish the line.", createdAt: "2026-10-24T17:00:00.000Z", updatedAt: "2026-10-24T17:00:00.000Z",
+      inventory: []
+    }
+  ];
+
+  c.loot = [
+    { id: "loot-001", name: "Silver reliquary lamp", holder: "party", gpValue: 65, notes: "Burns any oil as if it were holy. The Prior wants it back on its chain.", createdAt: "2026-10-24T20:05:00.000Z", updatedAt: "2026-10-24T20:05:00.000Z" },
+    { id: "loot-002", name: "Abbot's signet (swallowed by dark)", holder: "party", gpValue: 40, notes: "Warm to the touch. The Prior's reaction matters here.", createdAt: "2026-10-24T20:12:00.000Z", updatedAt: "2026-10-24T20:12:00.000Z" },
+    { id: "loot-003", name: "Cord of votive coins (330 cp in pilgrim-mint)", holder: "party", gpValue: 3, notes: "Layered coins, fired clay and silver.", createdAt: "2026-10-24T20:12:00.000Z", updatedAt: "2026-10-24T20:12:00.000Z" },
+    { id: "loot-004", name: "Vial of 'deep oud' incense", holder: "pc-wick", gpValue: 12, notes: "Jory pocketed it. Brenna noticed.", createdAt: "2026-10-24T20:40:00.000Z", updatedAt: "2026-10-24T20:40:00.000Z" }
+  ];
+
+  c.quests = [
+    { id: "q-001", title: "Relight the pilgrimage lantern before moonset", status: "open", notes: "Reward: the abbey's gratitude and a cold supper. Consequence: the road goes dark.", createdAt: "2026-10-24T17:00:00.000Z", updatedAt: "2026-10-24T20:00:00.000Z" },
+    { id: "q-002", title: "Learn the Cantor's true name", status: "open", notes: "Clue: it's carved somewhere it can't see itself.", createdAt: "2026-10-24T19:30:00.000Z", updatedAt: "2026-10-24T19:30:00.000Z" },
+    { id: "q-003", title: "Return the abbot's signet to Prior Aeliana", status: "done", notes: "She wept, then locked the tower door behind her.", createdAt: "2026-10-24T20:15:00.000Z", updatedAt: "2026-10-24T21:20:00.000Z" },
+    { id: "q-004", title: "Find out what happened to Brother Mundy", status: "dropped", notes: "The party chose the west stair instead. Thread left dangling on purpose.", createdAt: "2026-10-24T19:00:00.000Z", updatedAt: "2026-10-24T20:42:00.000Z" }
+  ];
+
+  c.relationships = [
+    { id: "rel-001", a: "npc-prior", b: "npc-cantor", type: "secret history", hint: "Prior Aeliana was in the nave the night the Cantor began to sing. She has never said what she dropped through the grating.", createdAt: "2026-10-24T19:20:00.000Z", updatedAt: "2026-10-24T20:30:00.000Z" },
+    { id: "rel-002", a: "npc-tolliver", b: "npc-prior", type: "old debt", hint: "Tolliver rafted Aeliana to the abbey years ago and hasn't let her forget the fare.", createdAt: "2026-10-24T17:00:00.000Z", updatedAt: "2026-10-24T17:00:00.000Z" },
+    { id: "rel-003", a: "pc-wick", b: "npc-tolliver", type: "informant", hint: "Jory's 'shortcut' through the crypt was Tolliver's rumor at full price.", createdAt: "2026-10-24T17:45:00.000Z", updatedAt: "2026-10-24T17:45:00.000Z" },
+    { id: "rel-004", a: "pc-wick", b: "pc-brenna", type: "quiet friction", hint: "Jory pocketed the incense; Brenna noticed and is waiting to see if he mentions it.", createdAt: "2026-10-24T20:41:00.000Z", updatedAt: "2026-10-24T20:41:00.000Z" }
+  ];
+
+  const zs = zeroQuestions();
+  c.sessionZero.answers = [
+    { q: zs[0], a: "Brenna tends the abbey's bees and believes the lantern oil is blessed; Jory owes his life to the abbey's last keeper; Mabs joined for the walk and stayed for the fight. They answer the plea as three strangers and leave as a party." },
+    { q: zs[1], a: "Lines: no harm to animals on screen, no possession of a PC without a checked-in heads-up. Veils: body horror kept brief." },
+    { q: zs[2], a: "X-card on the table; anyone can tap it, no explanation needed. Break-check-ins after each session." },
+    { q: zs[3], a: "All three answered the abbey's plea for lantern-bearers; they stayed together because splitting up in the crypt nearly killed them." },
+    { q: zs[4], a: "Sentimental items up for claim first, coin split evenly, everything logged in the Loot tab." },
+    { q: zs[5], a: "One evening, monthly. Three hours plus a five-minute 'what did we learn' at the end." },
+    { q: zs[6], a: "Standard array, Level 3, dice on the table, paper or digital sheets both fine." },
+    { q: zs[7], a: "Hooks welcome for Brenna's hives and Jory's abbey years; Mabs's clan records stay private until she opens them." },
+    { q: zs[8], a: "In-character friction fine in small doses; anyone can call pause; no sabotage of the shared plan." },
+    { q: zs[9], a: "A self-contained story with one proper crypt, one real climax, and everyone getting a hero moment." }
+  ];
+  c.sessionZero.updatedAt = "2026-10-24T21:30:00.000Z";
+
+  c.sessions = [
+    {
+      id: "sess-001", title: "Night one — the toll bridge and the toll the bridge takes", date: "2026-10-24", recap: "Met Tolliver at Fenwick crossing; he named his price for gossip: one silver or a story bigger than his last one. Mabs paid in story, Jory in silver. Learned the abbey's west stair floods and the 4th tower step 'is not ours anymore'. Reached Deepmoor at dusk. Prior Aeliana met the party, gave them the brass crypt key, and warned them not to let the lantern gutter. First watch: Jory. The dark outside the light began to hum.",
+      createdAt: "2026-10-24T19:00:00.000Z", updatedAt: "2026-10-24T19:30:00.000Z"
+    },
+    {
+      id: "sess-002", title: "Night two — the crypt, the choir, and the incense", date: "2026-10-24", recap: "Descended the east stair. Found the flooded nave where the Cantor sings one syllable behind the hymn. Brenna's blessed oil flared true; Mabs held the line at the choir gallery while Jory worked the reliquary chains loose. Recovered the silver lamp, the abbot's signet and the votive coins. Jory palmed the vial of incense — Brenna noticed. Returned the signet to Prior Aeliana, who wept and locked the tower door behind her. The lantern is lit; for now the Cantor is a syllable short. Left the west stair, and Brother Mundy, for another night.",
+      createdAt: "2026-10-24T21:00:00.000Z", updatedAt: "2026-10-24T21:30:00.000Z"
+    }
+  ];
+  return c;
+}
+
+function uid(prefix) {
+  return prefix + "-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+}
+
+function nowISO() {
+  return new Date().toISOString();
+}
+
+function esc(s) {
+  return String(s == null ? "" : s).
+    replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").
+    replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function fmtWhen(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return String(iso);
+  const p = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) +
+    " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+
+function todayISO() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
+
+function touch(o) {
+  if (o) o.updatedAt = nowISO();
+  return o;
+}
+
+function getSess(c, id) {
+  return c.sessions.find(s => s.id === id) || null;
+}
+
+function addSession(c, title, dateISO, recapText) {
+  const t = String(title == null ? "" : title).trim();
+  if (!t) return { error: "Give the session a title (it makes searching easier later)." };
+  const r = String(recapText == null ? "" : recapText).trim();
+  if (!r) return { error: "The recap is the whole point — write at least a sentence." };
+  const d = dateISO ? String(dateISO).trim() : "";
+  if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) return { error: "Date should look like 2026-01-31 (or leave it blank)." };
+  const ts = nowISO();
+  const s = { id: uid("sess"), title: t, date: d || todayISO(), recap: r, createdAt: ts, updatedAt: ts };
+  c.sessions.push(s);
+  c.updatedAt = ts;
+  return { ok: true, session: s };
+}
+
+function sortSessionsDesc(sessions) {
+  return sessions.slice().sort((a, b) =>
+    String(b.date || b.createdAt).localeCompare(String(a.date || a.createdAt)));
+}
+
+function summarizeRecap(s, maxWords) {
+  if (!maxWords) maxWords = 30;
+  const words = String(s || "").trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+  return words.length <= maxWords ? words.join(" ") : words.slice(0, maxWords).join(" ") + "…";
+}
+
+function recapWordCount(text) {
+  return String(text || "").trim().split(/\s+/).filter(Boolean).length;
+}
+
+function formatRecap(s, campaignName) {
+  const head = campaignName ? campaignName + " — " : "";
+  return head + s.title + (s.date ? " (" + s.date + ")" : "") +
+    " · recorded " + fmtWhen(s.createdAt) + "\n\n" + s.recap;
+}
+
+function recapSearchText(s) {
+  return (s.title + " " + s.recap).toLowerCase();
+}
+
+function getChar(c, id) {
+  return c.party.find(p => p.id === id) || c.npcs.find(n => n.id === id) || null;
+}
+
+function charLabel(c, id) {
+  if (id === "party") return "the party";
+  const ch = getChar(c, id);
+  return ch ? ch.name : "?";
+}
+
+function addCharacter(c, which, name, fields) {
+  if (which !== "party" && which !== "npcs") return { error: "Where should this person go?" };
+  const f = fields || {};
+  if (!String(name || "").trim()) return { error: "Everyone has a name — even the mysterious ones." };
+  const ts = nowISO();
+  const ch = {
+    id: uid(which === "party" ? "pc" : "npc"), name: String(name).trim(),
+    player: String(f.player || "").trim(), klass: String(f.klass || "").trim(), level: f.level || null,
+    role: String(f.role || "").trim(), faction: String(f.faction || "").trim(), location: String(f.location || "").trim(),
+    notes: String(f.notes || "").trim(), createdAt: ts, updatedAt: ts
+  };
+  if (which === "party") { delete ch.faction; delete ch.location; ch.inventory = []; }
+  else { delete ch.player; delete ch.klass; delete ch.level; ch.inventory = []; }
+  c[which].push(ch);
+  c.updatedAt = ts;
+  return { ok: true, char: ch };
+}
+
+function deleteCharacter(c, id) {
+  c.party = c.party.filter(p => p.id !== id);
+  c.npcs = c.npcs.filter(n => n.id !== id);
+  c.relationships = c.relationships.filter(r => r.a !== id && r.b !== id);
+  c.loot.forEach(l => { if (l.holder === id) l.holder = "party"; });
+  c.updatedAt = nowISO();
+}
+
+function invOf(c, charId) {
+  const ch = getChar(c, charId);
+  if (ch) return ch.inventory;
+  return null;
+}
+
+function findItem(c, itemId) {
+  for (const ch of c.party.concat(c.npcs)) {
+    const it = ch.inventory.find(i => i.id === itemId);
+    if (it) return { item: it, char: ch };
+  }
+  for (const l of c.loot) if (l.id === itemId) return { item: l, loot: true };
+  return null;
+}
+
+function makeItem(name, qty, notes) {
+  let n = String(name == null ? "" : name).trim();
+  if (!n) return { error: "Items need a name." };
+  n = n.charAt(0).toUpperCase() + n.slice(1);
+  let q = Number(qty);
+  if (qty === "" || qty == null) q = 1;
+  if (!Number.isFinite(q) || q <= 0) return { error: "Quantity must be a positive number." };
+  const t = nowISO();
+  return {
+    ok: true, item: {
+      id: uid("inv"), name: n, qty: q, notes: String(notes || "").trim(), createdAt: t, updatedAt: t
+    }
+  };
+}
+
+function addToInventory(c, charId, name, qty, notes) {
+  const inv = invOf(c, charId);
+  if (!inv) return { error: "Pick a character with an inventory (or use the Loot tab for party treasure)." };
+  const r = makeItem(name, qty === "" || qty == null ? 1 : qty, notes);
+  if (r.error) return r;
+  const key = String(name).trim().toLowerCase();
+  const stack = inv.find(i => i.name.toLowerCase() === key);
+  if (stack) {
+    const t = nowISO();
+    stack.qty = Math.round((Number(stack.qty) + Number(r.item.qty)) * 100) / 100;
+    if (r.item.notes) stack.notes = stack.notes ? stack.notes + " / " + r.item.notes : r.item.notes;
+    stack.updatedAt = t;
+    c.updatedAt = t;
+    return { ok: true, item: stack, stacked: true };
+  }
+  const it = r.item;
+  if (it.notes === undefined) it.notes = "";
+  inv.push(it);
+  c.updatedAt = it.createdAt;
+  return { ok: true, item: it };
+}
+
+function removeFromInventory(c, itemId, qty) {
+  const f = findItem(c, itemId);
+  if (!f || f.loot) return { error: "No such inventory item." };
+  let q = qty === undefined ? f.item.qty : Number(qty);
+  if (!Number.isFinite(q) || q <= 0) return { error: "Amount to remove must be a positive number." };
+  if (q > f.item.qty) q = f.item.qty;
+  const left = Math.round((Number(f.item.qty) - q) * 100) / 100;
+  const t = nowISO();
+  if (left <= 0) {
+    f.char.inventory = f.char.inventory.filter(i => i.id !== itemId);
+  } else {
+    f.item.qty = left;
+    f.item.updatedAt = t;
+  }
+  c.updatedAt = t;
+  return { ok: true, removed: q, left: Math.max(0, left) };
+}
+
+function transferItem(c, itemId, toCharId) {
+  const f = findItem(c, itemId);
+  if (!f || f.loot) return { error: "No such inventory item." };
+  const dst = invOf(c, toCharId);
+  if (!dst) return { error: "That destination has no inventory." };
+  if (f.char.id === toCharId) return { error: "It's already there." };
+  const it = f.item;
+  const t = nowISO();
+  const key = it.name.toLowerCase();
+  const stack = dst.find(i => i.name.toLowerCase() === key);
+  if (stack) stack.qty = Math.round((Number(stack.qty) + Number(it.qty)) * 100) / 100;
+  else dst.push(it);
+  f.char.inventory = f.char.inventory.filter(i => i.id !== it.id);
+  f.char.updatedAt = t;
+  const dc = getChar(c, toCharId);
+  if (dc) dc.updatedAt = t;
+  c.updatedAt = t;
+  return { ok: true };
+}
+
+function invUnitCount(inv) {
+  return inv.reduce((n, i) => n + Number(i.qty), 0);
+}
+
+function lootTotalGP(c) {
+  return c.loot.reduce((n, l) => n + (Number(l.gpValue) || 0), 0);
+}
+
+function lootUnitCount(c) {
+  return c.loot.reduce((n, l) => n + (Number(l.qty) || 1), 0);
+}
+
+function addLoot(c, name, gpValue, holder, notes) {
+  const n = String(name == null ? "" : name).trim();
+  if (!n) return { error: "Treasure needs a name — even the cursed ones." };
+  let gp = gpValue === "" || gpValue == null ? null : Number(gpValue);
+  if (gp != null && (!Number.isFinite(gp) || gp < 0)) return { error: "GP value must be zero or a positive number." };
+  const h = holder && holder !== "party" && !getChar(c, holder) ? "party" : (holder || "party");
+  const t = nowISO();
+  const l = { id: uid("loot"), name: n, holder: h, gpValue: gp, notes: String(notes || "").trim(), createdAt: t, updatedAt: t };
+  c.loot.push(l);
+  c.updatedAt = t;
+  return { ok: true, loot: l };
+}
+
+function deleteLoot(c, lootId) {
+  c.loot = c.loot.filter(l => l.id !== lootId);
+  c.updatedAt = nowISO();
+}
+
+function getQuest(c, id) {
+  return c.quests.find(q => q.id === id) || null;
+}
+
+function addQuest(c, title, notes) {
+  const t = String(title == null ? "" : title).trim();
+  if (!t) return { error: "Give the quest a title." };
+  const ts = nowISO();
+  const q = { id: uid("q"), title: t, notes: String(notes || "").trim(), status: "open", createdAt: ts, updatedAt: ts };
+  c.quests.push(q);
+  c.updatedAt = ts;
+  return { ok: true, quest: q };
+}
+
+const QUEST_STATUSES = ["open", "done", "dropped"];
+
+function setQuestStatus(c, questId, status) {
+  const q = getQuest(c, questId);
+  if (!q) return { error: "No such quest." };
+  if (QUEST_STATUSES.indexOf(status) < 0) return { error: "Status should be open, done or dropped." };
+  q.status = status;
+  q.updatedAt = nowISO();
+  c.updatedAt = q.updatedAt;
+  return { ok: true, quest: q };
+}
+
+function openQuests(c) {
+  return c.quests.filter(q => q.status === "open");
+}
+
+function questSummaryLine(c) {
+  return openQuests(c).length + " open · " +
+    c.quests.filter(q => q.status === "done").length + " done · " +
+    c.quests.filter(q => q.status === "dropped").length + " dropped";
+}
+
+function addRelationship(c, aId, bId, type, hint) {
+  const a = getChar(c, aId), b = getChar(c, bId);
+  if (!a || !b) return { error: "Both ends of the relationship must be known characters." };
+  if (a.id === b.id) return { error: "A character can't have a bond with themselves (that's what the notes field is for)." };
+  const h = String(hint || "").trim();
+  if (!h) return { error: "Describe the bond — a relationship hint needs at least a sentence." };
+  const t = nowISO();
+  const r = { id: uid("rel"), a: a.id, b: b.id, type: String(type || "").trim() || "connection", hint: h, createdAt: t, updatedAt: t };
+  c.relationships.push(r);
+  c.updatedAt = t;
+  return { ok: true, rel: r };
+}
+
+function setZeroAnswer(c, index, text) {
+  const zs = zeroQuestions();
+  const i = Number(index);
+  if (!c.sessionZero) c.sessionZero = { answers: [], updatedAt: nowISO() };
+  if (!(i >= 0 && i < zs.length)) return { error: "That worksheet question doesn't exist." };
+  const a = String(text == null ? "" : text).replace(/\s+$/, "");
+  c.sessionZero.answers[i] = { q: zs[i], a: a };
+  c.sessionZero.updatedAt = nowISO();
+  c.updatedAt = c.sessionZero.updatedAt;
+  return { ok: true };
+}
+
+function campaignStats(c) {
+  return {
+    sessions: c.sessions.length,
+    people: c.party.length + c.npcs.length,
+    invItems: c.party.concat(c.npcs).reduce((n, ch) => n + ch.inventory.length, 0),
+    loot: c.loot.length, lootGP: lootTotalGP(c),
+    quests: c.quests.length, ties: c.relationships.length
+  };
+}
+
+const SEARCH_KEYS = ["sessions", "party", "npcs", "inventory", "loot", "quests", "relationships", "session zero"];
+
+function searchCampaign(c, query) {
+  const q = String(query == null ? "" : query).trim().toLowerCase();
+  if (!q) return [];
+  const out = [];
+  const push = (section, kind, title, text, ts, id) => {
+    const hay = String(text || "").toLowerCase();
+    const i = hay.indexOf(q);
+    if (i < 0) return;
+    out.push({ section: section, kind: kind, title: title, ts: ts, id: id, snippet: snippet(text, q, i) });
+  };
+  c.sessions.forEach(s => push("sessions", "recap", s.title, s.title + " — " + s.recap, s.updatedAt, s.id));
+  c.party.concat(c.npcs).forEach(ch => push("people", ch.player !== undefined ? "PC" : "NPC",
+    ch.name, [ch.name, ch.player, ch.klass, ch.role, ch.faction, ch.location, ch.notes].join(" — "), ch.updatedAt, ch.id));
+  c.party.concat(c.npcs).forEach(ch => ch.inventory.forEach(it =>
+    push("inventory", "item", ch.name + ": " + it.name, it.name + " — " + it.notes, it.updatedAt, it.id)));
+  c.loot.forEach(l => push("loot", "loot", l.name, l.name + " — " + l.notes + " — held by " + charLabel(c, l.holder), l.updatedAt, l.id));
+  c.quests.forEach(qq => push("quests", "quest", qq.title, qq.title + " — " + qq.notes, qq.updatedAt, qq.id));
+  c.relationships.forEach(r => push("relationships", "bond",
+    charLabel(c, r.a) + " ↔ " + charLabel(c, r.b), r.hint, r.updatedAt, r.id));
+  (c.sessionZero ? c.sessionZero.answers : []).forEach(a => a && push("session zero", "worksheet", a.q, a.a, c.sessionZero.updatedAt, "zero"));
+  out.sort((x, y) => String(y.ts).localeCompare(String(x.ts)));
+  return out;
+}
+
+function snippet(text, q, at) {
+  if (at < 0) return "";
+  const n = 42;
+  const from = Math.max(0, at - n / 2), to = Math.min(String(text).length, at + q.length + n / 2);
+  const chunk = String(text).slice(from, to).replace(/\s+/g, " ").trim();
+  const lowIdx = chunk.toLowerCase().indexOf(q);
+  if (lowIdx < 0) return esc(chunk);
+  const pre = esc(chunk.slice(0, lowIdx)), hit = esc(chunk.slice(lowIdx, lowIdx + q.length)), post = esc(chunk.slice(lowIdx + q.length));
+  return (from > 0 ? "…" : "") + pre + "<mark>" + hit + "</mark>" + post + (to < String(text).length ? "…" : "");
+}
+
+function validateCampaign(c) {
+  if (!c || typeof c !== "object") return "not an object";
+  for (const k of ["id", "name", "sessions", "npcs", "party", "loot", "quests", "relationships", "sessionZero"]) {
+    if (!(k in c)) return "missing '" + k + "'";
+  }
+  for (const s of c.sessions) {
+    if (typeof s.title !== "string" || !s.title.trim()) return "session missing title";
+    if (typeof s.recap !== "string" || !s.recap.trim()) return "session '" + s.title + "' missing recap";
+  }
+  for (const ch of [].concat(c.party, c.npcs)) {
+    if (typeof ch.name !== "string" || !ch.name.trim()) return "character missing name";
+    if (!Array.isArray(ch.inventory)) return ch.name + " has no inventory array";
+  }
+  for (const it of [].concat(...[].concat(c.party, c.npcs).map(ch => ch.inventory))) {
+    if (typeof it.name !== "string" || !it.name.trim()) return "inventory item missing name";
+    const n = Number(it.qty);
+    if (!Number.isFinite(n) || n <= 0) return "item '" + it.name + "' has non-positive qty " + it.qty;
+  }
+  for (const q of c.quests) {
+    if (typeof q.title !== "string" || !q.title.trim()) return "quest missing title";
+    if (QUEST_STATUSES.indexOf(q.status) < 0) return "quest '" + q.title + "' bad status '" + q.status + "'";
+  }
+  for (const r of c.relationships) {
+    if (typeof r.hint !== "string" || !r.hint.trim()) return "relationship missing hint";
+  }
+  return null;
+}
+const LOGIC = {
+  zeroQuestions, newCampaign, seedCampaign, uid, nowISO, esc, fmtWhen, todayISO, touch,
+  getSess, addSession, sortSessionsDesc, summarizeRecap, recapWordCount, formatRecap, recapSearchText,
+  getChar, charLabel, addCharacter, deleteCharacter, invOf, findItem, makeItem,
+  addToInventory, removeFromInventory, transferItem, invUnitCount, lootTotalGP, lootUnitCount,
+  addLoot, deleteLoot, getQuest, addQuest, setQuestStatus, openQuests, questSummaryLine, QUEST_STATUSES,
+  addRelationship, setZeroAnswer, campaignStats, searchCampaign, snippet, validateCampaign
+};
+
+if (typeof window !== "undefined") window.DCC = LOGIC;
+/*LOGIC-END*/
+
+const KEY = "dnd-campaign-companion-v1";
+let data = null;
+let currentId = null;
+let currentTab = "sessions";
+let searchOpen = false;
+
+function load() {
+  let d = null;
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      d = JSON.parse(raw);
+      if (!d || !Array.isArray(d.campaigns)) d = null;
+      for (const c of (d ? d.campaigns : [])) {
+        if (!c.sessionZero || !Array.isArray(c.sessionZero.answers)) {
+          c.sessionZero = { answers: [], updatedAt: LOGIC.nowISO() };
+        }
+        for (const ch of [].concat(c.party || [], c.npcs || [])) {
+          if (!Array.isArray(ch.inventory)) ch.inventory = [];
+        }
+      }
+    }
+  } catch (e) { d = null; }
+  if (!d) d = { version: 1, campaigns: [LOGIC.seedCampaign()], selected: null };
+  data = d;
+  currentId = d.selected || (d.campaigns[0] && d.campaigns[0].id) || null;
+  if (!d.campaigns.some(c => c.id === currentId)) currentId = d.campaigns[0] ? d.campaigns[0].id : null;
+}
+
+function save() {
+  try {
+    data.selected = currentId;
+    localStorage.setItem(KEY, JSON.stringify(data));
+  } catch (e) {
+    console.warn("Could not save to localStorage", e);
+  }
+}
+
+function cur() {
+  return data.campaigns.find(c => c.id === currentId) || data.campaigns[0] || null;
+}
+
+const UI = {};
+
+function renderCampSelect() {
+  const sel = document.getElementById("campSelect");
+  sel.innerHTML = data.campaigns.map(c =>
+    '<option value="' + LOGIC.esc(c.id) + '"' + (c.id === currentId ? " selected" : "") + ">" +
+    LOGIC.esc(c.name) + "</option>").join("");
+}
+
+function bar() {
+  return "<div class='hint' style='margin:.2rem 0 .6rem'>" + LOGIC.esc(cur().description || "") + "<br>" +
+    LOGIC.esc(fmtStats(cur())) + "</div>";
+}
+
+function fmtStats(c) {
+  const s = LOGIC.campaignStats(c);
+  return "created " + LOGIC.fmtWhen(c.createdAt) + " · updated " + LOGIC.fmtWhen(c.updatedAt) +
+    " · " + s.sessions + " session" + (s.sessions === 1 ? "" : "s") +
+    " · " + s.people + " people · " + s.loot + " treasure lots (" + s.lootGP + " gp)" +
+    " · " + LOGIC.questSummaryLine(c);
+}
+
+function renderSessions() {
+  const c = cur();
+  const rows = LOGIC.sortSessionsDesc(c.sessions).map(s =>
+    "<div class='card'><h3>" + LOGIC.esc(s.title) + "</h3>" +
+    "<div class='meta'>played " + LOGIC.esc(s.date) + " · logged " + LOGIC.fmtWhen(s.createdAt) +
+    (s.updatedAt !== s.createdAt ? " · edited " + LOGIC.fmtWhen(s.updatedAt) : "") +
+    " · " + LOGIC.recapWordCount(s.recap) + " words</div>" +
+    "<div class='recap'>" + LOGIC.esc(s.recap) + "</div>" +
+    "<div class='acts'><button class='mini ghost' onclick=\"UI.editSession('" + s.id + "')\">Edit</button>" +
+    "<button class='mini ghost danger' onclick=\"UI.delSession('" + s.id + "')\">Delete</button>" +
+    "<button class='mini ghost' title='Copy a shareable recap to the clipboard' onclick=\"UI.copyRecap('" + s.id + "')\">Copy</button></div></div>"
+  ).join("");
+  return "<div class='sechead'><h2>Session recaps (" + c.sessions.length + ")</h2>" +
+    "<button class='primary' onclick=\"UI.addSession()\">+ Log a session</button></div>" +
+    (rows || "<div class='hint'>No sessions yet — the sample campaign has two to browse.</div>");
+}
+
+function peopleRow(ch, which) {
+  const invCount = LOGIC.invUnitCount(ch.inventory);
+  const badge = which === "party" ? "<span class='badge pc'>PC</span>" : "<span class='badge npc'>NPC</span>";
+  const extra = which === "party"
+    ? [ch.player ? "player: " + ch.player : "", ch.klass ? ch.klass + (ch.level ? " · level " + ch.level : "") : ""]
+    : [ch.role, ch.faction, ch.location];
+  return "<div class='card'><h3>" + badge + " " + LOGIC.esc(ch.name) + "</h3>" +
+    "<div class='meta'>" + LOGIC.esc(extra.filter(Boolean).join(" · ")) + "</div>" +
+    (ch.notes ? "<div class='hint'>" + LOGIC.esc(ch.notes) + "</div>" : "") +
+    "<div class='hint' style='margin-top:.3rem'>carrying " + ch.inventory.length + " item kind" +
+    (ch.inventory.length === 1 ? "" : "s") + " (" + invCount + " units)</div>" +
+    "<div class='acts'><button class='mini ghost' onclick=\"UI.editChar('" + which + "','" + ch.id + "')\">Edit</button>" +
+    "<button class='mini ghost danger' onclick=\"UI.delChar('" + ch.id + "')\">Delete</button></div></div>";
+}
+
+function renderPeople() {
+  const c = cur();
+  return "<div class='sechead'><h2>NPCs &amp; Party (" + (c.party.length + c.npcs.length) + ")</h2>" +
+    "<span class='row'><button class='primary' onclick=\"UI.addChar('party')\">+ Party member</button>" +
+    "<button class='primary' onclick=\"UI.addChar('npcs')\">+ NPC</button></span></div>" +
+    "<div class='hint' style='margin-bottom:.6rem'>Each person keeps their own inventory (see the <b>Inventories</b> tab) and can appear in relationship hints.</div>" +
+    c.party.map(p => peopleRow(p, "party")).join("") + c.npcs.map(n => peopleRow(n, "npcs")).join("");
+}
+
+function renderLoot() {
+  const c = cur();
+  const who = id => {
+    if (id === "party") return "held by the party";
+    const ch = LOGIC.getChar(c, id);
+    return "held by " + (ch ? ch.name : "?");
+  };
+  const rows = c.loot.slice().sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).map(l =>
+      "<div class='card'><h3>" + LOGIC.esc(l.name) + "</h3>" +
+      "<div class='meta'>" + (l.gpValue != null ? "≈" + l.gpValue + " gp · " : "") + who(l.holder) +
+      " · logged " + LOGIC.fmtWhen(l.createdAt) + "</div>" +
+      (l.notes ? "<div class='hint'>" + LOGIC.esc(l.notes) + "</div>" : "") +
+      "<div class='acts'><button class='mini ghost' onclick=\"UI.editLoot('" + l.id + "')\">Edit</button>" +
+      "<button class='mini ghost danger' onclick=\"UI.delLoot('" + l.id + "')\">Delete</button></div></div>").join("");
+  return "<div class='sechead'><h2>Loot (" + LOGIC.lootUnitCount(c) + " lots · " + LOGIC.lootTotalGP(c) + " gp)</h2>" +
+    "<button class='primary' onclick=\"UI.addLoot()\">+ Add loot</button></div>" +
+    "<div class='hint' style='margin-bottom:.6rem'>Loot is treasure pending a decision: sell, split, or squirrel away. Each person's gear lives in their inventory above.</div>" +
+    (rows || "<div class='hint'>No loot yet.</div>");
+}
+
+function invRow(ch, it) {
+  return "<div class='item'><span class='qty'>×" + it.qty + "</span>" +
+    "<span class='nm'>" + LOGIC.esc(it.name) + "</span>" +
+    "<span class='nt'>" + LOGIC.esc(it.notes || "") + "</span>" +
+    "<span class='row end'>" +
+    "<button class='mini ghost' onclick=\"UI.editItem('" + ch.id + "','" + it.id + "')\">Edit</button>" +
+    "<button class='mini ghost' title='Move to another person' onclick=\"UI.moveItem('" + ch.id + "','" + it.id + "')\">Move</button>" +
+    "<button class='mini ghost danger' onclick=\"UI.delItem('" + it.id + "')\">Delete</button></span></div>" +
+    "<div class='meta' style='border-top:none;padding-top:0'>added " + LOGIC.fmtWhen(it.createdAt) +
+    (it.updatedAt !== it.createdAt ? " · edited " + LOGIC.fmtWhen(it.updatedAt) : "") + "</div>";
+}
+
+function ownerBlock(title, ch) {
+  return "<div class='card'><h3>" + LOGIC.esc(title) + "</h3>" +
+    "<div class='meta'>" + ch.inventory.length + " item kind" + (ch.inventory.length === 1 ? "" : "s") +
+    " · " + LOGIC.invUnitCount(ch.inventory) + " units</div>" +
+    (ch.inventory.length ? ch.inventory.map(i => invRow(ch, i)).join("") : "<div class='hint'>empty</div>") +
+    "<div class='acts'><button class='mini ghost' onclick=\"UI.addItem('" + ch.id + "')\">+ Add item</button></div></div>";
+}
+
+function renderItems() {
+  const c = cur();
+  return "<div class='sechead'><h2>Inventories</h2></div>" +
+    "<div class='hint' style='margin-bottom:.6rem'>Per-character gear, stacked by name. Use <b>Move</b> to hand items around — quantity-aware merging, always timestamped.</div>" +
+    c.party.concat(c.npcs).map(ch => ownerBlock(ch.name + (ch.level ? " (" + ch.klass + ", level " + ch.level + ")" : ch.role ? " (" + ch.role + ")" : ""), ch)).join("");
+}
+
+function renderQuests() {
+  const c = cur();
+  const qRow = q =>
+    "<div class='card'><h3><span class='pill " + q.status + "'>" + q.status + "</span> " + LOGIC.esc(q.title) + "</h3>" +
+    "<div class='meta'>logged " + LOGIC.fmtWhen(q.createdAt) + " · updated " + LOGIC.fmtWhen(q.updatedAt) + "</div>" +
+    (q.notes ? "<div class='hint'>" + LOGIC.esc(q.notes) + "</div>" : "") +
+    "<div class='acts'>" + ["open", "done", "dropped"].map(st =>
+      "<button class='mini ghost'" + (q.status === st ? " disabled" : "") +
+      " onclick=\"UI.questStatus('" + q.id + "','" + st + "')\">" + st + "</button>").join("") +
+    "<button class='mini ghost' onclick=\"UI.editQuest('" + q.id + "')\">Edit</button>" +
+    "<button class='mini ghost danger' onclick=\"UI.delQuest('" + q.id + "')\">Delete</button></div></div>";
+  const order = { open: 0, done: 1, dropped: 2 };
+  const rows = c.quests.slice().sort((a, b) =>
+    order[a.status] - order[b.status] || String(b.createdAt).localeCompare(String(a.createdAt))).map(qRow).join("");
+  return "<div class='sechead'><h2>Quest log</h2>" +
+    "<button class='primary' onclick=\"UI.addQuest()\">+ Add quest</button></div>" +
+    "<div class='hint' style='margin-bottom:.6rem'>" + LOGIC.questSummaryLine(c) + "</div>" +
+    (rows || "<div class='hint'>No quests yet.</div>");
+}
+
+function renderTies() {
+  const c = cur();
+  const rRow = r =>
+    "<div class='card'><h3>" + LOGIC.esc(LOGIC.charLabel(c, r.a)) + " ↔ " + LOGIC.esc(LOGIC.charLabel(c, r.b)) + "</h3>" +
+    "<div class='meta'>" + LOGIC.esc(r.type) + " · logged " + LOGIC.fmtWhen(r.createdAt) + "</div>" +
+    "<div class='hint'>" + LOGIC.esc(r.hint) + "</div>" +
+    "<div class='acts'><button class='mini ghost' onclick=\"UI.editTie('" + r.id + "')\">Edit</button>" +
+    "<button class='mini ghost danger' onclick=\"UI.delTie('" + r.id + "')\">Delete</button></div></div>";
+  return "<div class='sechead'><h2>Relationship hints (" + c.relationships.length + ")</h2>" +
+    "<button class='primary' onclick=\"UI.addTie()\">+ Add hint</button></div>" +
+    "<div class='hint' style='margin-bottom:.6rem'>Short notes on who owes whom, who suspects whom, and who shares a secret — fuel for the next session.</div>" +
+    (c.relationships.map(rRow).join("") || "<div class='hint'>No hints yet.</div>");
+}
+
+function renderZero() {
+  const c = cur();
+  const rows = c.sessionZero.answers.map((a, i) =>
+    "<div class='card'><h3>" + (i + 1) + ". " + LOGIC.esc(a.q) + "</h3>" +
+    "<textarea id='zero-" + i + "' rows='3' oninput=\"UI.zeroInput(" + i + ")\"" +
+    " placeholder='Write it down now, thank yourself later…'>" + LOGIC.esc(a.a || "") + "</textarea></div>"
+  ).join("");
+  return "<div class='sechead'><h2>Session-zero worksheet</h2>" +
+    "<span class='hint'>answers save as you type (last saved " + LOGIC.fmtWhen(c.sessionZero.updatedAt) + ")</span></div>" +
+    "<div class='hint' style='margin-bottom:.6rem'>Answer these once, at the table, before the first dice are thrown. Everything below is searchable.</div>" +
+    rows;
+}
+
+function renderMain() {
+  const c = cur();
+  if (!c) {
+    document.getElementById("main").innerHTML = "<div class='hint'>No campaigns yet — create one with “+ Campaign”.</div>";
+    return;
+  }
+  const body = bar();
+  let tab = "";
+  if (currentTab === "sessions") tab = renderSessions();
+  else if (currentTab === "people") tab = renderPeople();
+  else if (currentTab === "items") tab = renderItems() + renderLoot();
+  else if (currentTab === "quests") tab = renderQuests();
+  else if (currentTab === "ties") tab = renderTies();
+  else if (currentTab === "zero") tab = renderZero();
+  document.getElementById("main").innerHTML = body + tab;
+}
+
+function renderSearch(q) {
+  const box = document.getElementById("searchResults");
+  const c = cur();
+  const query = String(q || "").trim();
+  if (!query || !c) { box.style.display = "none"; box.innerHTML = ""; searchOpen = false; return; }
+  const hits = LOGIC.searchCampaign(c, query);
+  searchOpen = true;
+  box.style.display = "block";
+  const TAB_FOR = { "sessions": "sessions", "people": "people", "inventory": "items", "loot": "items", "quests": "quests", "relationships": "ties", "session zero": "zero" };
+  box.innerHTML = "<div class='sr-head'>Search in <b>" + LOGIC.esc(c.name) + "</b>: " + hits.length +
+    " match" + (hits.length === 1 ? "" : "es") +
+    "&nbsp;<button class='mini ghost' onclick='UI.clearSearch()'>clear</button></div>" +
+    (hits.length === 0 ? "<div class='hint'>Nothing found in this campaign.</div>" : hits.slice(0, 60).map(h =>
+      "<div class='sr' onclick=\"UI.jumpTab('" + (TAB_FOR[h.section] || "sessions") + "')\">" +
+      "<div><span class='badge'>" + LOGIC.esc(h.kind) + "</span> <b>" + LOGIC.esc(h.title) + "</b> " +
+      "<span class='meta'>· " + LOGIC.fmtWhen(h.ts) + "</span></div>" +
+      "<div class='snippet'>" + h.snippet + "</div></div>").join(""));
+}
+
+function gotoTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll("nav button").forEach(b =>
+    b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
+  document.getElementById("main").innerHTML =
+    bar() + (tab === "sessions" ? renderSessions() : tab === "people" ? renderPeople() :
+      tab === "items" ? renderItems() + renderLoot() : tab === "quests" ? renderQuests() :
+      tab === "ties" ? renderTies() : renderZero());
+}
+
+function dialog(title, bodyHTML) {
+  const d = document.createElement("dialog");
+  d.id = "modal";
+  d.innerHTML = "<form method='dialog'><h3>" + LOGIC.esc(title) + "</h3>" + bodyHTML +
+    "<div class='acts' style='margin-top:.8rem'><button class='primary' value='save' id='saveBtn'>Save</button>" +
+    "<button value='cancel' formnovalidate>Cancel</button></div></form>";
+  document.body.appendChild(d);
+  d.addEventListener("close", () => d.remove());
+  d.showModal();
+  return d;
+}
+
+function dlgField(label, name, value, attrs) {
+  const a = attrs || {};
+  return "<label>" + label + "<input name='" + name + "' value=\"" + LOGIC.esc(value == null ? "" : value) + "\"" +
+    (a.type ? " type='" + a.type + "'" : "") + (a.min ? " min='" + a.min + "'" : "") +
+    (a.max ? " max='" + a.max + "'" : "") + (a.ph ? " placeholder=\"" + LOGIC.esc(a.ph) + "\"" : "") + "></label>";
+}
+
+function dlgArea(label, name, value, ph) {
+  return "<label>" + label + "<textarea name='" + name + "' rows='4' placeholder=\"" + LOGIC.esc(ph || "") + "\">" +
+    LOGIC.esc(value == null ? "" : value) + "</textarea></label>";
+}
+
+function dlgSelect(label, name, options, value) {
+  return "<label>" + label + "<select name='" + name + "'>" + options.map(o =>
+    "<option value=\"" + LOGIC.esc(o.v) + "\"" + (o.v === value ? " selected" : "") + ">" + LOGIC.esc(o.t) + "</option>").join("") +
+    "</select></label>";
+}
+
+function dlgErr(d, msg) {
+  let e = d.querySelector(".derr");
+  if (!e) {
+    e = document.createElement("p");
+    e.className = "derr";
+    e.style.color = "var(--danger)";
+    e.style.fontSize = ".85rem";
+    d.querySelector("form").insertBefore(e, d.querySelector(".acts"));
+  }
+  e.textContent = msg;
+}
+
+function guardSave(d, fn) {
+  const form = d.querySelector("form");
+  form.addEventListener("submit", e => {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
+    const vals = {};
+    form.querySelectorAll("input,textarea,select").forEach(el => vals[el.name] = el.value);
+    try {
+      fn(vals);
+      d.close();
+    } catch (err) { dlgErr(d, err.message); }
+  });
+}
+
+UI.addSession = function () {
+  const d = dialog("Log a session",
+    dlgField("Title", "title", "", { ph: "Night two — the crypt" }) +
+    dlgField("Played on", "date", LOGIC.todayISO(), { type: "date" }) +
+    dlgArea("Recap", "recap", "", "What happened? Anyone can read this later to pick the thread back up."));
+  guardSave(d, v => {
+    const r = LOGIC.addSession(cur(), v.title, v.date, v.recap);
+    if (r.error) throw new Error(r.error);
+    save(); renderMain();
+  });
+};
+
+UI.editSession = function (id) {
+  const c = cur(); const s = LOGIC.getSess(c, id); if (!s) return;
+  const d = dialog("Edit session",
+    dlgField("Title", "title", s.title) +
+    dlgField("Played on", "date", s.date, { type: "date" }) +
+    dlgArea("Recap", "recap", s.recap));
+  guardSave(d, v => {
+    if (!v.title.trim() || !v.recap.trim()) throw new Error("Keep both the title and the recap — they're searchable.");
+    s.title = v.title.trim();
+    s.date = v.date || s.date;
+    s.recap = v.recap.trim();
+    LOGIC.touch(s);
+    c.updatedAt = LOGIC.nowISO();
+    save(); renderMain();
+  });
+};
+
+UI.delSession = function (id) {
+  const c = cur(); const s = LOGIC.getSess(c, id); if (!s) return;
+  if (!confirm("Delete session “" + s.title + "”? This can't be undone.")) return;
+  c.sessions = c.sessions.filter(x => x.id !== id);
+  c.updatedAt = LOGIC.nowISO();
+  save(); renderMain();
+};
+
+UI.addChar = function (which) {
+  const isPC = which === "party";
+  const c = cur();
+  const fields =
+    dlgField("Name", "name", "", { ph: isPC ? "Mabs Underbough" : "Tolliver Grebe" }) +
+    (isPC
+      ? dlgField("Player (optional)", "player", "") + dlgField("Class & domain", "klass", "", { ph: "Rogue" }) + dlgField("Level", "level", "", { type: "number", min: "1", max: "20" })
+      : dlgField("Role", "role", "", { ph: "ferrier and gossip" }) + dlgField("Faction", "faction", "") + dlgField("Where they're found", "location", "")) +
+    dlgArea("Notes", "notes", "", "Voice, tells, secrets — searchable later.");
+  const d = dialog(isPC ? "Add party member" : "Add NPC", fields);
+  guardSave(d, v => {
+    const r = LOGIC.addCharacter(c, which, v.name, v);
+    if (r.error) throw new Error(r.error);
+    save(); renderMain();
+  });
+};
+
+UI.editChar = function (which, id) {
+  const c = cur(); const ch = LOGIC.getChar(c, id); if (!ch) return;
+  const isPC = which === "party";
+  const fields =
+    dlgField("Name", "name", ch.name) +
+    (isPC
+      ? dlgField("Player (optional)", "player", ch.player || "") + dlgField("Class & domain", "klass", ch.klass || "") + dlgField("Level", "level", ch.level == null ? "" : ch.level, { type: "number", min: "1", max: "20" })
+      : dlgField("Role", "role", ch.role || "") + dlgField("Faction", "faction", ch.faction || "") + dlgField("Where they're found", "location", ch.location || "")) +
+    dlgArea("Notes", "notes", ch.notes);
+  const d = dialog("Edit " + ch.name, fields);
+  guardSave(d, v => {
+    if (!v.name.trim()) throw new Error("Keep a name on them.");
+    ch.name = v.name.trim();
+    if (isPC) {
+      ch.player = v.player.trim(); ch.klass = v.klass.trim();
+      ch.level = v.level === "" ? null : Number(v.level);
+      if (ch.level != null && (!Number.isFinite(ch.level) || ch.level < 1)) ch.level = null;
+    } else {
+      ch.role = v.role.trim(); ch.faction = v.faction.trim(); ch.location = v.location.trim();
+    }
+    ch.notes = v.notes.trim();
+    LOGIC.touch(ch);
+    c.updatedAt = LOGIC.nowISO();
+    save(); renderMain();
+  });
+};
+
+UI.delChar = function (id) {
+  const c = cur(); const ch = LOGIC.getChar(c, id); if (!ch) return;
+  const n = ch.inventory.length;
+  if (!confirm("Remove " + ch.name + " and their inventory (" + n + " item" + (n === 1 ? "" : "s") + ")? Relationship hints mentioning them go too.")) return;
+  LOGIC.deleteCharacter(c, id);
+  save(); renderMain();
+};
+
+UI.addItem = function (charId) {
+  const c = cur();
+  if (!LOGIC.invOf(c, charId)) return;
+  const d = dialog("Add item",
+    dlgField("Item", "name", "", { ph: "Lantern oil (blessed)" }) +
+    dlgField("Quantity", "qty", "1", { type: "number", min: "0", ph: "1" }) +
+    dlgArea("Notes", "notes", "", "Where it came from, what it does…"));
+  guardSave(d, v => {
+    const r = LOGIC.addToInventory(c, charId, v.name, v.qty, v.notes);
+    if (r.error) throw new Error(r.error);
+    save(); renderMain();
+  });
+};
+
+UI.editItem = function (charId, itemId) {
+  const c = cur(); const f = LOGIC.findItem(c, itemId);
+  if (!f || f.loot || f.char.id !== charId) return;
+  const it = f.item;
+  const d = dialog("Edit item",
+    dlgField("Item", "name", it.name) +
+    dlgField("Quantity", "qty", it.qty, { type: "number", min: "0" }) +
+    dlgArea("Notes", "notes", it.notes));
+  guardSave(d, v => {
+    if (!v.name.trim()) throw new Error("Items need a name.");
+    it.name = v.name.trim();
+    const q = Number(v.qty);
+    if (!Number.isFinite(q) || q <= 0) throw new Error("Quantity must be a positive number.");
+    it.qty = q;
+    it.notes = v.notes.trim();
+    LOGIC.touch(it);
+    c.updatedAt = LOGIC.nowISO();
+    save(); renderMain();
+  });
+};
+
+UI.moveItem = function (charId, itemId) {
+  const c = cur(); const f = LOGIC.findItem(c, itemId);
+  if (!f || f.loot || f.char.id !== charId) return;
+  const opts = c.party.concat(c.npcs).filter(x => x.id !== charId).map(x => ({ v: x.id, t: x.name }));
+  if (!opts.length) { alert("There's nobody else to hand it to."); return; }
+  const d = dialog("Move “" + f.item.name + "”",
+    dlgSelect("Give it to", "to", [{ v: "", t: "— choose —" }].concat(opts), "") +
+    dlgField("How many (blank = all " + f.item.qty + ")", "amount", "", { type: "number", min: "1" }));
+  guardSave(d, v => {
+    if (!v.to) throw new Error("Choose someone to give it to.");
+    const amt = v.amount === "" ? null : Number(v.amount);
+    if (amt != null && (!Number.isFinite(amt) || amt <= 0)) throw new Error("Amount must be a positive number.");
+    if (amt == null || amt >= f.item.qty) {
+      const r = LOGIC.transferItem(c, itemId, v.to);
+      if (r.error) throw new Error(r.error);
+    } else {
+      const mk = LOGIC.makeItem(f.item.name, amt, f.item.notes);
+      if (mk.error) throw new Error(mk.error);
+      const dst = LOGIC.invOf(c, v.to);
+      if (!dst) throw new Error("That person has no inventory.");
+      const key = f.item.name.toLowerCase();
+      const stack = dst.find(i => i.name.toLowerCase() === key);
+      const t = LOGIC.nowISO();
+      if (stack) { stack.qty = Math.round((Number(stack.qty) + amt) * 100) / 100; stack.updatedAt = t; }
+      else dst.push(mk.item);
+      f.item.qty = Math.round((Number(f.item.qty) - amt) * 100) / 100;
+      f.item.updatedAt = t;
+      c.updatedAt = t;
+    }
+    save(); renderMain();
+  });
+};
+
+UI.delItem = function (itemId) {
+  const c = cur();
+  const f = LOGIC.findItem(c, itemId);
+  if (!f) return;
+  if (f.loot) { LOGIC.deleteLoot(c, itemId); save(); renderMain(); return; }
+  if (!confirm("Delete “" + f.item.name + "” from " + f.char.name + "'s inventory?")) return;
+  f.char.inventory = f.char.inventory.filter(i => i.id !== itemId);
+  c.updatedAt = LOGIC.nowISO();
+  save(); renderMain();
+};
+
+UI.addLoot = function () {
+  const c = cur();
+  const opts = [{ v: "party", t: "the party (unclaimed)" }].concat(
+    c.party.concat(c.npcs).map(x => ({ v: x.id, t: x.name + (x.player !== undefined ? " (PC)" : " (NPC)") })));
+  const d = dialog("Add loot",
+    dlgField("Treasure", "name", "", { ph: "Silver reliquary lamp" }) +
+    dlgField("Value (gp, optional)", "gpValue", "", { type: "number", min: "0" }) +
+    dlgSelect("Held by", "holder", opts, "party") +
+    dlgArea("Notes", "notes", "", "What it does, who wants it back…"));
+  guardSave(d, v => {
+    const r = LOGIC.addLoot(c, v.name, v.gpValue, v.holder, v.notes);
+    if (r.error) throw new Error(r.error);
+    save(); renderMain();
+  });
+};
+
+UI.editLoot = function (id) {
+  const c = cur(); const l = c.loot.find(x => x.id === id); if (!l) return;
+  const opts = [{ v: "party", t: "the party (unclaimed)" }].concat(
+    c.party.concat(c.npcs).map(x => ({ v: x.id, t: x.name + (x.player !== undefined ? " (PC)" : " (NPC)") })));
+  const d = dialog("Edit loot",
+    dlgField("Treasure", "name", l.name) +
+    dlgField("Value (gp)", "gpValue", l.gpValue == null ? "" : l.gpValue, { type: "number", min: "0" }) +
+    dlgSelect("Held by", "holder", opts, l.holder) +
+    dlgArea("Notes", "notes", l.notes));
+  guardSave(d, v => {
+    if (!v.name.trim()) throw new Error("Treasure needs a name.");
+    l.name = v.name.trim();
+    l.gpValue = v.gpValue === "" ? null : Number(v.gpValue);
+    if (l.gpValue != null && (!Number.isFinite(l.gpValue) || l.gpValue < 0)) throw new Error("GP value must be zero or a positive number.");
+    l.holder = v.holder;
+    l.notes = v.notes.trim();
+    LOGIC.touch(l);
+    c.updatedAt = LOGIC.nowISO();
+    save(); renderMain();
+  });
+};
+
+UI.delLoot = function (id) {
+  const c = cur(); const l = c.loot.find(x => x.id === id); if (!l) return;
+  if (!confirm("Delete loot “" + l.name + "”?")) return;
+  LOGIC.deleteLoot(c, id);
+  save(); renderMain();
+};
+
+UI.addQuest = function () {
+  const d = dialog("Add quest",
+    dlgField("Quest", "title", "", { ph: "Relight the pilgrimage lantern" }) +
+    dlgArea("Notes", "notes", "", "Known facts, consequences, next steps."));
+  guardSave(d, v => {
+    const r = LOGIC.addQuest(cur(), v.title, v.notes);
+    if (r.error) throw new Error(r.error);
+    save(); renderMain();
+  });
+};
+
+UI.editQuest = function (id) {
+  const c = cur(); const q = LOGIC.getQuest(c, id); if (!q) return;
+  const d = dialog("Edit quest",
+    dlgField("Quest", "title", q.title) +
+    dlgArea("Notes", "notes", q.notes) +
+    dlgSelect("Status", "status", LOGIC.QUEST_STATUSES.map(s => ({ v: s, t: s })), q.status));
+  guardSave(d, v => {
+    if (!v.title.trim()) throw new Error("Give the quest a title.");
+    q.title = v.title.trim();
+    q.notes = v.notes.trim();
+    const r = LOGIC.setQuestStatus(c, q.id, v.status);
+    if (r.error) throw new Error(r.error);
+    save(); renderMain();
+  });
+};
+
+UI.questStatus = function (id, status) {
+  const r = LOGIC.setQuestStatus(cur(), id, status);
+  if (r.error) { alert(r.error); return; }
+  save(); renderMain();
+};
+
+UI.delQuest = function (id) {
+  const c = cur(); const q = LOGIC.getQuest(c, id); if (!q) return;
+  if (!confirm("Delete quest “" + q.title + "”?")) return;
+  c.quests = c.quests.filter(x => x.id !== id);
+  c.updatedAt = LOGIC.nowISO();
+  save(); renderMain();
+};
+
+UI.addTie = function () {
+  const c = cur();
+  const people = c.party.concat(c.npcs);
+  if (people.length < 2) { alert("Add at least two people (PCs or NPCs) first."); return; }
+  const opts = people.map(x => ({ v: x.id, t: x.name }));
+  const d = dialog("Add relationship hint",
+    dlgSelect("Person A", "a", opts, people[0].id) +
+    dlgSelect("Person B", "b", opts, people[1].id) +
+    dlgField("Type", "type", "", { ph: "old debt / secret history / rivalry" }) +
+    dlgArea("Hint", "hint", "", "Short, specific, usable at the table."));
+  guardSave(d, v => {
+    const r = LOGIC.addRelationship(c, v.a, v.b, v.type, v.hint);
+    if (r.error) throw new Error(r.error);
+    save(); renderMain();
+  });
+};
+
+UI.editTie = function (id) {
+  const c = cur(); const r = c.relationships.find(x => x.id === id); if (!r) return;
+  const d = dialog("Edit hint",
+    dlgArea("Hint", "hint", r.hint) +
+    dlgField("Type", "type", r.type));
+  guardSave(d, v => {
+    if (!v.hint.trim()) throw new Error("The hint is the point — write a sentence.");
+    r.hint = v.hint.trim();
+    r.type = v.type.trim() || "connection";
+    LOGIC.touch(r);
+    c.updatedAt = LOGIC.nowISO();
+    save(); renderMain();
+  });
+};
+
+UI.delTie = function (id) {
+  const c = cur();
+  if (!confirm("Delete this relationship hint?")) return;
+  c.relationships = c.relationships.filter(x => x.id !== id);
+  c.updatedAt = LOGIC.nowISO();
+  save(); renderMain();
+};
+
+const zeroTimers = {};
+UI.zeroInput = function (i) {
+  const campId = currentId;
+  const el = document.getElementById("zero-" + i);
+  if (!el || !cur()) return;
+  clearTimeout(zeroTimers[i]);
+  zeroTimers[i] = setTimeout(() => {
+    if (currentId !== campId) return;
+    const cc = data.campaigns.find(c => c.id === campId);
+    if (!cc) return;
+    const r = LOGIC.setZeroAnswer(cc, i, el.value);
+    if (r.error) { alert(r.error); return; }
+    save();
+    const meta = document.querySelector("#main .sechead .hint");
+    if (meta) meta.textContent = "answers save as you type (last saved " + LOGIC.fmtWhen(cc.sessionZero.updatedAt) + ")";
+  }, 500);
+};
+
+UI.newCampaign = function () {
+  const d = dialog("New campaign",
+    dlgField("Campaign name", "name", "", { ph: "The Saltmarsh Job" }) +
+    dlgArea("Description (optional)", "description", "", "Pitch line, system, play style."));
+  guardSave(d, v => {
+    const c = LOGIC.newCampaign(v.name);
+    c.description = v.description.trim();
+    data.campaigns.push(c);
+    currentId = c.id;
+    currentTab = "sessions";
+    save(); renderMain(); renderCampSelect();
+  });
+};
+
+UI.switchCampaign = function (id) {
+  if (!data.campaigns.some(c => c.id === id)) return;
+  currentId = id;
+  save();
+  UI.jumpTab("sessions");
+  renderSearch(document.getElementById("searchBox").value);
+};
+
+UI.delCampaign = function () {
+  const c = cur(); if (!c) return;
+  if (!confirm("Delete campaign “" + c.name + "” and everything in it? Export first if you want a copy.")) return;
+  data.campaigns = data.campaigns.filter(x => x.id !== c.id);
+  if (!data.campaigns.length) {
+    data.campaigns.push(LOGIC.seedCampaign());
+  }
+  currentId = data.campaigns[0].id;
+  save(); renderCampSelect(); renderMain();
+};
+
+UI.exportData = function () {
+  save();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "dnd-campaign-companion-backup-" + LOGIC.todayISO() + ".json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+};
+
+UI.importData = function () {
+  const inp = document.createElement("input");
+  inp.type = "file";
+  inp.accept = "application/json";
+  inp.onchange = function () {
+    const f = inp.files && inp.files[0];
+    if (!f) return;
+    const rd = new FileReader();
+    rd.onload = function () {
+      try {
+        const d = JSON.parse(String(rd.result));
+        if (!d || !Array.isArray(d.campaigns) || !d.campaigns.length) throw new Error("That file isn't a campaign backup.");
+        const bad = d.campaigns.map(LOGIC.validateCampaign).findIndex(Boolean);
+        if (bad >= 0) throw new Error("Campaign #" + (bad + 1) + " in the file is incomplete (" + LOGIC.validateCampaign(d.campaigns[bad]) + ").");
+        const haveIds = {};
+        data.campaigns.forEach(c => haveIds[c.id] = true);
+        const fresh = d.campaigns.filter(c => !haveIds[c.id]);
+        if (!fresh.length) { alert("Nothing new to import (all campaigns already here)."); return; }
+        const merge = confirm("Add " + fresh.length + " campaign(s) alongside the " + data.campaigns.length +
+          " already here?\n\nOK = merge · Cancel = replace everything with the file.");
+        if (merge) data.campaigns = data.campaigns.concat(fresh);
+        else data.campaigns = fresh;
+        currentId = data.campaigns[0].id;
+        save(); renderCampSelect(); renderMain();
+        alert("Imported " + fresh.length + " campaign(s). Campaigns here now: " + data.campaigns.length);
+      } catch (e) {
+        alert("Import failed: " + e.message);
+      }
+    };
+    rd.readAsText(f);
+  };
+  inp.click();
+};
+
+UI.copyRecap = function (id) {
+  const c = cur(); const s = LOGIC.getSess(c, id); if (!s) return;
+  const text = LOGIC.formatRecap(s, c.name);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(
+      () => flash("Recap copied to clipboard."),
+      () => promptCopy(text));
+  } else promptCopy(text);
+};
+
+function promptCopy(text) {
+  window.prompt("Copy the recap from here:", text);
+}
+
+function flash(msg) {
+  const el = document.createElement("div");
+  el.textContent = msg;
+  el.style.cssText = "position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);padding:.4rem .9rem;border-radius:99px;font-size:.85rem;z-index:99";
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1800);
+}
+
+UI.clearSearch = function () {
+  document.getElementById("searchBox").value = "";
+  renderSearch("");
+};
+
+UI.jumpTab = function (tab) {
+  currentTab = tab;
+  document.querySelectorAll("nav button").forEach(b =>
+    b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
+  renderMain();
+};
+
+function boot() {
+  load();
+  save();
+  renderCampSelect();
+  document.getElementById("campSelect").addEventListener("change", e => UI.switchCampaign(e.target.value));
+  document.getElementById("newCampBtn").addEventListener("click", UI.newCampaign);
+  document.getElementById("delCampBtn").addEventListener("click", UI.delCampaign);
+  document.getElementById("exportBtn").addEventListener("click", UI.exportData);
+  document.getElementById("importBtn").addEventListener("click", UI.importData);
+  document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => UI.jumpTab(b.dataset.tab)));
+  document.getElementById("searchBox").addEventListener("input", e => renderSearch(e.target.value));
+  document.getElementById("searchBox").addEventListener("keydown", e => {
+    if (e.key === "Escape") UI.clearSearch();
+  });
+  renderMain();
+}
+
+if (typeof document !== "undefined" && document.getElementById("main")) {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.DCC = LOGIC;
+  window.UI = UI;
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = LOGIC;
+}
+})();
+</script>
+</body>
+</html>
